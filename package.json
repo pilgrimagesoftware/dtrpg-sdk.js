@@ -1,5 +1,5 @@
 {
-  "name": "dtrpg-sdk",
+  "name": "@pilgrimagesoftware/dtrpg-sdk",
   "version": "0.1.0",
   "description": "SDK for the DriveThruRPG API",
   "type": "module",

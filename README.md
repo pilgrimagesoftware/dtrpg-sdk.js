@@ -12,10 +12,8 @@ Requires Node.js 22+.
 
 ## Installation
 
-Not yet published to npm. Once released:
-
 ```bash
-npm install dtrpg-sdk
+npm install @pilgrimagesoftware/dtrpg-sdk
 ```
 
 ## Building from source
@@ -34,7 +32,7 @@ git submodule update --init --recursive
 ## Quick Start
 
 ```ts
-import { Config, DriveThruRpgSdk, authenticate } from "dtrpg-sdk";
+import { Config, DriveThruRpgSdk, authenticate } from "@pilgrimagesoftware/dtrpg-sdk";
 
 const sdk = DriveThruRpgSdk.withConfig(new Config({ applicationKey: "my-app-key" }));
 
