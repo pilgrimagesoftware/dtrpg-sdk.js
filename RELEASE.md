@@ -45,16 +45,13 @@ fix isn't lost on the next regular release.
 
 ## npm publishing
 
-The long-term plan is [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC) — no token,
-just the workflow's `permissions: id-token: write` exchanging a short-lived OIDC token for a publish credential
-scoped to this exact repository and workflow. That requires `@pilgrimagesoftware/dtrpg-sdk` to have this workflow
-registered as a trusted publisher in the package's npm settings, which in turn requires the package to already
-exist on the registry — a chicken-and-egg problem for the very first publish, currently stuck on an npm.com site
-issue that's blocking that setup entirely.
+Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC) — no token. The
+workflow's `permissions: id-token: write` lets `npm publish` exchange a short-lived OIDC token for a publish
+credential at run time, scoped to this exact repository and workflow
+(`pilgrimagesoftware/dtrpg-sdk.js`, `.github/workflows/release.yaml`), which is registered as a trusted publisher
+in `@pilgrimagesoftware/dtrpg-sdk`'s npm settings. Trusted publishing requires npm CLI >=11.5.1; the workflow
+upgrades npm explicitly since the version bundled with Node is typically older.
 
-Until that's unblocked, a temporary `NPM_TOKEN` repo secret (org-admin publish rights) is used instead, via
-`NODE_AUTH_TOKEN` on the publish step. Once the first publish succeeds and trusted publishing can be registered
-on npm's side, remove `NPM_TOKEN` from repo secrets and drop the `env:` block from the "Publish to npm" step —
-`id-token: write` and the npm-version upgrade step are already in place for that switch. Trusted publishing
-requires npm CLI >=11.5.1; the workflow upgrades npm explicitly since the version bundled with Node is typically
-older.
+If the trusted publisher registration is ever removed or needs to be re-established (e.g. a new npm org, a
+renamed package), the first publish after that will need a temporary `NPM_TOKEN` repo secret again, wired into
+the "Publish to npm" step via `NODE_AUTH_TOKEN` — see this file's git history for the exact change to reapply.
