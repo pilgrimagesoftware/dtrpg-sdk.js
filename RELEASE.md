@@ -43,9 +43,11 @@ git checkout -b hotfix/<description>
 PR into `master`, merge, tag, which triggers the release workflow. Then PR the same branch into `develop` so the
 fix isn't lost on the next regular release.
 
-## Secrets
+## npm publishing
 
-- `NPM_TOKEN` — a repo secret with publish access to the `@pilgrimagesoftware/dtrpg-sdk` package on npm,
-  used by the Release workflow's `npm publish` step. Must be a token with permission to publish under the
-  `pilgrimagesoftware` npm org (first publish of a scoped package requires org publish rights, not just a
-  package-scoped automation token).
+Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC) — no `NPM_TOKEN`
+secret. The Release workflow has `permissions: id-token: write`, which lets `npm publish` exchange a short-lived
+OIDC token for a publish credential at run time, scoped to this exact repository and workflow. `@pilgrimagesoftware/dtrpg-sdk`
+must have this workflow (`pilgrimagesoftware/dtrpg-sdk.js`, `.github/workflows/release.yaml`) registered as a
+trusted publisher in the package's npm settings before the first publish can succeed. Trusted publishing requires
+npm CLI >=11.5.1; the workflow upgrades npm explicitly since the version bundled with Node is typically older.
