@@ -86,34 +86,37 @@ jobs:
           BRANCH="${{ steps.push_branch.outputs.branch }}"
           HEAD_OID="${{ steps.push_branch.outputs.head_oid }}"
 
-          ADDITIONS=$(jq -n \
-            --arg package_json "$(base64 -w0 package.json)" \
-            --arg package_lock "$(base64 -w0 package-lock.json)" \
-            --arg changelog "$(base64 -w0 CHANGELOG.md)" \
-            '[
-              {path: "package.json", contents: $package_json},
-              {path: "package-lock.json", contents: $package_lock},
-              {path: "CHANGELOG.md", contents: $changelog}
-            ]')
-
-          INPUT=$(jq -n \
+          # File contents are read via --rawfile (jq reads the file itself)
+          # rather than piped through `base64 -w0 file` as a shell argument:
+          # package-lock.json is large enough that passing its base64 form
+          # as a CLI arg blows past the kernel's ARG_MAX ("Argument list too
+          # long"). jq's @base64 filter does the encoding internally instead.
+          jq -n \
+            --rawfile package_json package.json \
+            --rawfile package_lock package-lock.json \
+            --rawfile changelog CHANGELOG.md \
             --arg repo "pilgrimagesoftware/dtrpg-sdk.js" \
             --arg branch "$BRANCH" \
             --arg headOid "$HEAD_OID" \
             --arg message "chore(release): ${{ steps.version.outputs.version }}" \
-            --argjson additions "$ADDITIONS" \
-            '{
-              branch: {repositoryNameWithOwner: $repo, branchName: $branch},
-              message: {headline: $message},
-              expectedHeadOid: $headOid,
-              fileChanges: {additions: $additions}
-            }')
-
-          jq -n \
             --arg query 'mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }' \
-            --argjson input "$INPUT" \
-            '{query: $query, variables: {input: $input}}' \
-            | gh api graphql --input -
+            '{
+              query: $query,
+              variables: {
+                input: {
+                  branch: {repositoryNameWithOwner: $repo, branchName: $branch},
+                  message: {headline: $message},
+                  expectedHeadOid: $headOid,
+                  fileChanges: {
+                    additions: [
+                      {path: "package.json", contents: ($package_json | @base64)},
+                      {path: "package-lock.json", contents: ($package_lock | @base64)},
+                      {path: "CHANGELOG.md", contents: ($changelog | @base64)}
+                    ]
+                  }
+                }
+              }
+            }' | gh api graphql --input -
 
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
