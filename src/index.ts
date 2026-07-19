@@ -18,7 +18,7 @@
  *
  * @example
  * ```ts
- * import { Config, DriveThruRpgSdk, authenticate } from "dtrpg-sdk";
+ * import { Config, DriveThruRpgSdk, authenticate } from "@pilgrimagesoftware/dtrpg-sdk";
  *
  * const sdk = DriveThruRpgSdk.withConfig(new Config({ applicationKey: "my-app-key" }));
  *

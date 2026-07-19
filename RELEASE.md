@@ -45,5 +45,7 @@ fix isn't lost on the next regular release.
 
 ## Secrets
 
-- `NPM_TOKEN` — a repo secret with publish access to the `dtrpg-sdk` package on npm, used by the Release
-  workflow's `npm publish` step.
+- `NPM_TOKEN` — a repo secret with publish access to the `@pilgrimagesoftware/dtrpg-sdk` package on npm,
+  used by the Release workflow's `npm publish` step. Must be a token with permission to publish under the
+  `pilgrimagesoftware` npm org (first publish of a scoped package requires org publish rights, not just a
+  package-scoped automation token).
