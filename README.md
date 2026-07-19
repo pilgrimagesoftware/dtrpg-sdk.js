@@ -5,15 +5,10 @@
 
 A Node/TypeScript SDK for the [DriveThruRPG API](https://api.drivethrurpg.com).
 
-Requires Node.js 22+.
+Provides configuration, authentication/session lifecycle, and an async library client for
+listing orders, product lists, and preparing downloads.
 
-**Status: in development.** This repository currently provides the package scaffolding
-(build, lint, type check, test, and release pipeline). Configuration, authentication/session
-lifecycle, and the library client (orders, product lists, download preparation) are not yet
-implemented — see [dtrpg-sdk.js#1](https://github.com/pilgrimagesoftware/dtrpg-sdk.js/issues/1)
-for progress. For a complete reference implementation of the same API surface, see the
-[Go](https://github.com/pilgrimagesoftware/dtrpg-sdk.go), [Rust](https://github.com/pilgrimagesoftware/dtrpg-sdk.rs),
-or [Swift](https://github.com/pilgrimagesoftware/dtrpg-sdk.swift) SDKs.
+Requires Node.js 22+.
 
 ## Installation
 
@@ -25,9 +20,9 @@ npm install dtrpg-sdk
 
 ## Building from source
 
-This repository will use the `dtrpg-api` repository as a submodule (`API/`) once the
-`dtrpg-api` integration lands, matching the pattern used by the Go/Rust/Swift SDKs. Clone
-with submodules, or initialize them after cloning:
+This repository uses the `dtrpg-api` repository as a submodule (`API/`), matching the
+pattern used by the Go/Rust/Swift SDKs. Clone with submodules, or initialize them after
+cloning:
 
 ```bash
 git clone --recursive https://github.com/pilgrimagesoftware/dtrpg-sdk.js.git
@@ -35,6 +30,27 @@ git clone --recursive https://github.com/pilgrimagesoftware/dtrpg-sdk.js.git
 # or, if already cloned:
 git submodule update --init --recursive
 ```
+
+## Quick Start
+
+```ts
+import { Config, DriveThruRpgSdk, authenticate } from "dtrpg-sdk";
+
+const sdk = DriveThruRpgSdk.withConfig(new Config({ applicationKey: "my-app-key" }));
+
+// Exchange your application key for a session token, then store it on the SDK.
+const response = await authenticate("my-app-key", sdk.requireConfig());
+const session = sdk.applyAuthResponse(response);
+console.log(session.token);
+
+// Create an authenticated library client:
+const client = sdk.libraryClient();
+const library = await client.listOrderProducts({ page: 1, pageSize: 25 });
+```
+
+See the package's TSDoc comments (published alongside the type declarations) for the full
+API reference, including `Config`, `AuthSession`/`AuthState`, `LibraryClient`, and the
+library model types (`OrderProductItem`, `ProductListItem`, etc.).
 
 ## Development
 
