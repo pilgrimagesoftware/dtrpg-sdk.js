@@ -66,7 +66,14 @@ jobs:
         run: |
             npm run build
 
+      # A temporary NPM_TOKEN with org-admin publish rights is used to get
+      # past the very first publish, since trusted publisher registration
+      # (npm.com) is blocked by a site issue on npm's side and can't be set
+      # up yet. Once trusted publishing is registered and confirmed working,
+      # remove NPM_TOKEN from repo secrets and drop this env block again.
       - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
             npm publish --provenance --access public
 
