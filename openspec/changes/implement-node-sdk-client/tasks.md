@@ -69,4 +69,4 @@
 - [x] 9.3 `npm test` passes with no skipped tests
 - [x] 9.4 `npm run build` passes
 - [x] 9.5 `npm audit --audit-level=high` reports no new vulnerabilities
-- [ ] 9.6 CI (lint, typecheck, test, build, audit) passes on the PR — pending CI run on push; verify on the PR after this commit lands
+- [x] 9.6 CI (lint, typecheck, test, build, audit) passes on the PR
