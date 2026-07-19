@@ -214,6 +214,27 @@ describe("prepareDownload", () => {
     void client.prepareDownload(515_276).catch(() => undefined);
   });
 
+  it("does not silently assume an index when called from an untyped call site", async () => {
+    // Simulates a plain-JavaScript caller (no compiler check) that omits `index`.
+    // The SDK does not default it to 0 — the request is sent with a literal
+    // "undefined" query value and the API rejects it, matching the documented
+    // "no default index is silently assumed" behavior.
+    let queryIndex: string | null = null;
+    server.use(
+      http.get("http://mock-api/vBeta/order_products/515276/prepare", ({ request }) => {
+        queryIndex = new URL(request.url).searchParams.get("index");
+        return HttpResponse.json({ message: "index is required" }, { status: 400 });
+      }),
+    );
+
+    const untypedClient = clientFor() as unknown as {
+      prepareDownload: (id: number, index?: number) => Promise<unknown>;
+    };
+
+    await expect(untypedClient.prepareDownload(515_276)).rejects.toBeInstanceOf(ApiError);
+    expect(queryIndex).toBe("undefined");
+  });
+
   it("throws ApiError on a non-success status", async () => {
     server.use(
       http.get("http://mock-api/vBeta/order_products/1/prepare", () =>
