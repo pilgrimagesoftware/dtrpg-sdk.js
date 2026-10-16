@@ -75,12 +75,21 @@ export async function authenticate(
     throw new HttpError(urlString, undefined, cause);
   }
 
-  const status = response.status;
-  const raw = await response.text();
+  return decodeTokenResponse(urlString, response.status, await response.text());
+}
 
+/**
+ * Decodes an auth endpoint's raw response body into an {@link AuthTokenResponse}.
+ *
+ * Shared by every endpoint that returns the token payload.
+ *
+ * @throws {@link DecodeFailedError} if the body cannot be parsed, which includes error
+ * responses. The error carries the HTTP `status` and a truncated copy of the payload.
+ */
+export function decodeTokenResponse(url: string, status: number, raw: string): AuthTokenResponse {
   try {
     return parseAuthTokenResponse(JSON.parse(raw) as unknown);
   } catch (cause) {
-    throw new DecodeFailedError(urlString, status, cause, truncatedPayload(raw));
+    throw new DecodeFailedError(url, status, cause, truncatedPayload(raw));
   }
 }

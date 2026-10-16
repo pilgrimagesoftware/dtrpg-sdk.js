@@ -2,6 +2,7 @@
 
 export { loginWithCredentials } from "./credentialLogin.js";
 export { authenticate } from "./keyExchange.js";
+export { refresh } from "./tokenRefresh.js";
 export {
   AuthSession,
   AuthSessionError,

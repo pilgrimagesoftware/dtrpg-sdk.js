@@ -72,3 +72,26 @@ sdk.invalidateSession(sessionError);
 
 `AuthSession.refreshTokenExpiredAt(unixTimestamp)` checks whether the
 session's refresh token is still usable, given the current wall-clock time.
+
+## Refreshing a session
+
+An access token is short-lived. To renew it without repeating the application-key
+exchange, call `sdk.refreshSession()`. It sends the session's refresh token to the API and
+replaces the stored session with the response, including the new refresh token and expiry.
+
+```ts
+try {
+  await sdk.refreshSession();
+} catch (error) {
+  if (error instanceof DecodeFailedError) {
+    // The refresh token was rejected; fall back to authenticate() with the
+    // application key. The existing session is left in place.
+  }
+}
+
+// Clients created before the refresh still hold the old token.
+const client = sdk.libraryClient();
+```
+
+`refresh(refreshToken, config)` makes the same call without an SDK instance. It sends a
+`Cookie` header, which Node allows but browsers do not, so use it server-side.

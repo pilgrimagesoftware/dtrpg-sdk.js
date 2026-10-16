@@ -36,6 +36,7 @@ export const VERSION = "0.1.0";
 export {
   loginWithCredentials,
   authenticate,
+  refresh,
   AuthSession,
   AuthSessionError,
   type AuthState,
