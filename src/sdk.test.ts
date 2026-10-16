@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { AuthSessionError, type AuthTokenResponse } from "./auth/session.js";
 import { Config } from "./config.js";
-import { UnauthenticatedError, UnconfiguredError } from "./errors.js";
+import { DecodeFailedError, UnauthenticatedError, UnconfiguredError } from "./errors.js";
 import { LibraryClient } from "./library/client.js";
 import { DriveThruRpgSdk } from "./sdk.js";
 
@@ -103,5 +105,61 @@ describe("DriveThruRpgSdk session lifecycle", () => {
     const client = sdk.libraryClient();
 
     expect(client).toBeInstanceOf(LibraryClient);
+  });
+});
+
+describe("DriveThruRpgSdk.refreshSession", () => {
+  const server = setupServer();
+
+  beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+
+  const sdkWithSession = (): DriveThruRpgSdk => {
+    const sdk = DriveThruRpgSdk.withConfig(
+      new Config({ applicationKey: "app-key", baseUrl: "http://mock-api" }),
+    );
+    sdk.applyAuthResponse(tokenResponse);
+    return sdk;
+  };
+
+  it("replaces the stored session with the refreshed one", async () => {
+    server.use(
+      http.post("http://mock-api/vBeta/auth/refresh", ({ request }) => {
+        expect(request.headers.get("cookie")).toBe("refreshToken=refresh-token");
+        return HttpResponse.json({
+          token: "new-jwt",
+          refreshToken: "new-refresh",
+          refreshTokenTTL: 2_000_000_000,
+        });
+      }),
+    );
+    const sdk = sdkWithSession();
+
+    const session = await sdk.refreshSession();
+
+    expect(session.token).toBe("new-jwt");
+    expect(session.refreshToken).toBe("new-refresh");
+    expect(sdk.requireSession()).toBe(session);
+  });
+
+  it("keeps the old session when the refresh token is rejected", async () => {
+    server.use(
+      http.post(
+        "http://mock-api/vBeta/auth/refresh",
+        () => new HttpResponse("{}", { status: 401 }),
+      ),
+    );
+    const sdk = sdkWithSession();
+
+    await expect(sdk.refreshSession()).rejects.toBeInstanceOf(DecodeFailedError);
+
+    expect(sdk.requireSession().token).toBe("jwt-token");
+  });
+
+  it("requires a configuration and a session", async () => {
+    await expect(new DriveThruRpgSdk().refreshSession()).rejects.toBeInstanceOf(UnconfiguredError);
+    const configured = DriveThruRpgSdk.withConfig(new Config({ applicationKey: "app-key" }));
+    await expect(configured.refreshSession()).rejects.toBeInstanceOf(UnauthenticatedError);
   });
 });

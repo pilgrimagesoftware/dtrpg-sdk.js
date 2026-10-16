@@ -6,6 +6,7 @@
  * your application.
  */
 
+import { refresh } from "./auth/tokenRefresh.js";
 import { AuthSession, type AuthSessionError, type AuthTokenResponse } from "./auth/session.js";
 import type { Config } from "./config.js";
 import { UnauthenticatedError, UnconfiguredError } from "./errors.js";
@@ -113,6 +114,28 @@ export class DriveThruRpgSdk {
     this.requireConfig();
     this.currentSession = AuthSession.fromApiResponse(response);
     return this.currentSession;
+  }
+
+  /**
+   * Renews the access token using the active session's refresh token.
+   *
+   * On success the stored session is replaced with the one the API returns, including its
+   * (possibly rotated) refresh token and expiry, and the new session is returned. Any
+   * {@link LibraryClient} created earlier still holds the old access token; call
+   * {@link libraryClient} again to get one with the new token.
+   *
+   * On failure the existing session is left in place, so the caller can decide whether to
+   * retry, fall back to a fresh `authenticate`, or {@link clearSession}.
+   *
+   * @throws {@link UnconfiguredError} if the SDK has not been configured.
+   * @throws {@link UnauthenticatedError} if there is no active session.
+   * @throws {@link HttpError} on transport failure.
+   * @throws {@link DecodeFailedError} if the API rejects the refresh token.
+   */
+  async refreshSession(): Promise<AuthSession> {
+    const config = this.requireConfig();
+    const session = this.requireSession();
+    return this.applyAuthResponse(await refresh(session.refreshToken, config));
   }
 
   /**
