@@ -50,6 +50,10 @@ See the package's TSDoc comments (published alongside the type declarations) for
 API reference, including `Config`, `AuthSession`/`AuthState`, `LibraryClient`, and the
 library model types (`OrderProductItem`, `ProductListItem`, etc.).
 
+See the [documentation site](https://pilgrimagesoftware.github.io/dtrpg-sdk.js/) for
+versioned guides covering installation, authentication, the library client, and error
+handling, with usage examples for each.
+
 ## Development
 
 ```bash
